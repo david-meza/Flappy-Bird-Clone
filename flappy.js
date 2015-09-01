@@ -30,9 +30,8 @@ var pipesModel = {
       this.timeCounter -= this.step;
       if (this.step > 500) this.step -= 20;
       var topPipeBottom = Math.floor(Math.random() * 200 + 50)
-      console.log(topPipeBottom)
-      this.pipes.push(new Pipe(0, topPipeBottom));
-      this.pipes.push(new Pipe(topPipeBottom + 80, view.canvas.height() - 200));
+      this.pipes.push(new Pipe(0, topPipeBottom, true));
+      this.pipes.push(new Pipe(topPipeBottom + 80, view.canvas.height() - 200, false));
     }
   },
 
@@ -42,9 +41,17 @@ var pipesModel = {
       if (pipe.position.x < -pipe.width) {
         arr.splice(index, 1)
         pipesModel.score += 1;
-        console.log(pipesModel.pipes.length + " pipes left")
       }
     })
+  }
+}
+
+var scores = {
+  all: [],
+  top: function(){
+    return this.all.sort(function(a, b){
+      return b-a;
+    }).slice(0,Math.min(this.all.length, 5));
   }
 }
 
@@ -54,6 +61,7 @@ var view = {
 
   init: function () {
     this.setCanvas();
+    this.highscores = $("#highscores");
   },
 
   setCanvas: function () {
@@ -61,17 +69,16 @@ var view = {
   },
 
   redraw: function(bird, pipes, score){
-    this.frames += 1.38;
+    this.frames = (this.frames + 1.38) % 42;
     this.canvas.clearCanvas();
     this.drawFloor();
     this.drawBackground();
-    this.drawBird(bird);
     this.drawPipes(pipes);
+    this.drawBird(bird);
     this.drawScore(score);
   },
 
   drawBackground: function(){
-
     this.canvas.drawImage({
       source: 'res/sheet.png',
       repeat: 'repeat',
@@ -128,7 +135,7 @@ var view = {
       y: this.canvas.height() - 200,
       sWidth: 112,
       sHeight: 56,
-      sx: 338 + this.frames % 40,
+      sx: 338 + this.frames,
       sy: 0,
       cropFromCenter: false,
       width: this.canvas.width()/2,
@@ -142,7 +149,7 @@ var view = {
       y: this.canvas.height() - 200,
       sWidth: 112,
       sHeight: 56,
-      sx: 338 + this.frames % 40,
+      sx: 338 + this.frames,
       sy: 0,
       cropFromCenter: false,
       width: this.canvas.width()/2,
@@ -152,24 +159,70 @@ var view = {
   },
 
   drawPipe: function(pipe){
-    this.canvas.drawRect({
-      fillStyle: "green",
+    this.canvas.drawImage({
+      source: 'res/sheet.png',
+      sx: 502,
+      sy: 30,
+      sWidth: 52,
+      sHeight: 30,
       x: pipe.position.x,
       y: pipe.startHeight,
       width: pipe.width,
       height: pipe.endHeight - pipe.startHeight,
       fromCenter: false,
     });
+
+    pipe.hanging ? this.drawPipeBottom(pipe) : this.drawPipeTop(pipe);
+
+    // 251, 0, 26, 200
+  },
+
+  drawPipeBottom: function(pipe){
+    this.canvas.drawImage({
+      source: 'res/sheet.png',
+      sx: 502,
+      sy: 0,
+      sWidth: 52,
+      sHeight: 24,
+      x: pipe.position.x,
+      y: pipe.endHeight - 30,
+      width: pipe.width,
+      height: 30,
+      fromCenter: false,
+    });
+  },
+
+  drawPipeTop: function(pipe){
+    this.canvas.drawImage({
+      source: 'res/sheet.png',
+      sx: 502,
+      sy: 0,
+      sWidth: 52,
+      sHeight: 30,
+      x: pipe.position.x,
+      y: pipe.startHeight,
+      width: pipe.width,
+      height: 30,
+      fromCenter: false,
+    });
   },
 
   drawBird: function (bird) {
-    this.canvas.drawRect({
+    var rotation = Math.sin(bird.velocity.y / 5 * Math.PI) * 90;
+    if (rotation < -35) rotation = -35;
+    this.canvas.drawImage({
+      source: 'res/sheet.png',
+      sx: 312,
+      sy: 230,
+      sWidth: 34,
+      sHeight: 24,
       fillStyle: "black",
       x: bird.position.x,
       y: bird.position.y,
-      width: 20,
-      height: 20,
+      width: 34,
+      height: 24,
       fromCenter: false,
+      rotate: rotation,
     });
   },
 
@@ -181,7 +234,16 @@ var view = {
   },
 
   toggleGameOver: function() {
+    this.updateHighScores(scores.top());
     $("#gameover").toggleClass("hidden");
+  },
+
+  updateHighScores: function(scores){
+    this.highscores.empty();
+    console.log(typeof this.highscores);
+    scores.forEach(function(score){
+      $(this.highscores).append("<li>" + score + "</li>");
+    })
   }
 
 }
@@ -211,10 +273,9 @@ var controller = {
   },
 
   gameOver: function() {
-    console.log(this.playLoop)
     clearInterval(this.playLoop);
     this.playLoop = null;
-    console.log(this.playLoop)
+    scores.all.push(pipesModel.score/2);
     view.toggleGameOver();
   },
 
@@ -245,27 +306,18 @@ function Bird () {
   this.tic = tic;
   this.jump = function () {
     this.velocity.y = -5;
-    console.log(this);
   };
 
   this.dead = function(){
-    var dead = false;
-    if (player.outOfBounds()) {
-      dead = true;
-    } else {
-      pipesModel.pipes.forEach(function(pipe){
-        // console.log("Check collision");
-        // console.log(player);
-        // console.log(pipe);
-        if (player.collides(pipe)){
-          dead = true;
-        }
-      })
-    };
-    if (dead) {
-      controller.gameOver();
-      console.log("Dead");
-    }
+    if (player.outOfBounds() || player.hitPipe()) controller.gameOver();
+  }
+
+  this.hitPipe = function(){
+    var result = false;
+    pipesModel.pipes.forEach(function(pipe){
+      if (player.collides(pipe)) result = true;
+    })
+    return result;
   }
 
   this.collides = function(pipe){
@@ -293,11 +345,12 @@ function Bird () {
   }
 }
 
-function Pipe (top, bottom) {
+function Pipe (top, bottom, hanging) {
   this.velocity = {
     x: -5,
     y: 0
   };
+  this.hanging = hanging;
   this.position = {
     x: view.canvas.width(),
     y: 0

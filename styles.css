@@ -39,7 +39,7 @@ canvas {
 #gameover {
   position: absolute;
   margin: 0 auto;
-  margin-top: 200px;
+  margin-top: 100px;
   font-size: 5em;
   text-align: center;
   height: 100%;
