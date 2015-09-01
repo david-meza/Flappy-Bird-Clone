@@ -50,6 +50,8 @@ var pipesModel = {
 
 var view = {
 
+  frames: 0,
+
   init: function () {
     this.setCanvas();
   },
@@ -59,6 +61,7 @@ var view = {
   },
 
   redraw: function(bird, pipes, score){
+    this.frames += 1.38;
     this.canvas.clearCanvas();
     this.drawFloor();
     this.drawBackground();
@@ -68,15 +71,7 @@ var view = {
   },
 
   drawBackground: function(){
-    // var patt = this.canvas.createPattern({
-    //   source: 'res/sheet.png',
-    //   repeat: 'repeat',
-    //   sWidth: 138,
-    //   sHeight: 114,
-    //   sx: 0,
-    //   sy: 0,
-    //   cropFromCenter: false,
-    // })
+
     this.canvas.drawImage({
       source: 'res/sheet.png',
       repeat: 'repeat',
@@ -105,7 +100,6 @@ var view = {
       height: this.canvas.height() - 200,
       fromCenter: false,
     })
-
   },
 
   drawScore: function(score){
@@ -127,14 +121,34 @@ var view = {
   },
 
   drawFloor: function(){
-    this.canvas.drawRect({
-      fillStyle: "yellow",
+    this.canvas.drawImage({
+      source: 'res/sheet.png',
+      repeat: 'repeat',
       x: 0,
       y: this.canvas.height() - 200,
-      width: this.canvas.width(),
+      sWidth: 112,
+      sHeight: 56,
+      sx: 338 + this.frames % 40,
+      sy: 0,
+      cropFromCenter: false,
+      width: this.canvas.width()/2,
       height: 200,
       fromCenter: false,
-    });
+    })
+    this.canvas.drawImage({
+      source: 'res/sheet.png',
+      repeat: 'repeat',
+      x: this.canvas.width()/2,
+      y: this.canvas.height() - 200,
+      sWidth: 112,
+      sHeight: 56,
+      sx: 338 + this.frames % 40,
+      sy: 0,
+      cropFromCenter: false,
+      width: this.canvas.width()/2,
+      height: 200,
+      fromCenter: false,
+    })
   },
 
   drawPipe: function(pipe){
