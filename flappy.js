@@ -24,9 +24,10 @@ var pipesModel = {
     if (this.timeCounter > this.step){
       this.timeCounter -= this.step;
       this.step -= 2;
-      var topPipeBottom = Math.floor(Math.random() * 200 + 300)
+      var topPipeBottom = Math.floor(Math.random() * 300 + 100)
+      console.log(topPipeBottom)
       this.pipes.push(new Pipe(0, topPipeBottom));
-      this.pipes.push(new Pipe(topPipeBottom + 200, view.canvas.height()));
+      this.pipes.push(new Pipe(topPipeBottom + 100, view.canvas.height()));
     }
   },
 
@@ -70,7 +71,8 @@ var view = {
       x: pipe.position.x,
       y: pipe.startHeight,
       width: pipe.width,
-      height: pipe.endHeight,
+      height: pipe.endHeight - pipe.startHeight,
+      fromCenter: false,
     });
   },
 
@@ -86,7 +88,6 @@ var view = {
 
   setListeners: function () {
     document.addEventListener("mousedown", function(){
-      console.log("Clicked!");
       player.jump.call(player);
     })
   }
@@ -104,11 +105,11 @@ var controller = {
 
   play: function(){
     setInterval(function(){
-      console.log(pipesModel.pipes.length);
       controller.generatePipes(Date.now() - controller.currentTime);
       view.redraw.call(view, player, pipesModel.pipes);
       player.tic();
       pipesModel.ticPipes();
+      player.dead.call(player);
     }, 15);
   },
 
@@ -121,6 +122,10 @@ var controller = {
 
 
 function Bird () {
+  this.bounding = {
+    x: 20,
+    y: 20,
+  }
   this.velocity = {
     x: 0,
     y: 0,
@@ -135,6 +140,34 @@ function Bird () {
     this.velocity.y = -4;
     console.log(this);
   };
+
+  this.dead = function(){
+    pipesModel.pipes.forEach(function(pipe){
+      // console.log("Check collision");
+      // console.log(player);
+      // console.log(pipe);
+      if (player.collides(pipe)){
+        alert("Dead");
+      }
+    })
+  }
+
+  this.collides = function(other){
+    // get the rightmost x value of the left sides
+    // get the leftmost x value of the right sides
+    // get the highest y value of the bottom sides
+    // get the lowest y value of the top sides
+
+    // We intersect if the rightmost is more than the leftmost and our lowest is greater than our highest.
+    var rightmost = Math.max(this.position.x + this.bounding.x, other.position.x + 40),
+        leftmost  = Math.min(this.position.x, other.position.x),
+        topmost   = Math.max(this.position.y, other.endHeight - other.startHeight),
+        bottommost= Math.min(this.position.y + this.bounding.y, other.startHeight + (other.endHeight - other.startHeight));
+
+    // console.log(rightmost, leftmost, topmost, bottommost);
+    console.log(((leftmost > rightmost) && (bottommost > topmost)));
+    return ((leftmost > rightmost) && (bottommost > topmost));
+  }
 }
 
 function Pipe (top, bottom) {
