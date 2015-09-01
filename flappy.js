@@ -83,6 +83,7 @@ var view = {
       y: bird.position.y,
       width: 20,
       height: 20,
+      fromCenter: false,
     });
   },
 
@@ -104,11 +105,11 @@ var controller = {
   currentTime: Date.now(),
 
   play: function(){
-    setInterval(function(){
+    this.playLoop = setInterval(function(){
       controller.generatePipes(Date.now() - controller.currentTime);
-      view.redraw.call(view, player, pipesModel.pipes);
       player.tic();
       pipesModel.ticPipes();
+      view.redraw.call(view, player, pipesModel.pipes);
       player.dead.call(player);
     }, 15);
   },
@@ -116,6 +117,10 @@ var controller = {
   generatePipes: function(dt){
     controller.currentTime = Date.now();
     pipesModel.generatePipe(dt);
+  },
+
+  gameOver: function() {
+    clearInterval(this.playLoop);
   }
 
 }
@@ -142,31 +147,47 @@ function Bird () {
   };
 
   this.dead = function(){
-    pipesModel.pipes.forEach(function(pipe){
-      // console.log("Check collision");
-      // console.log(player);
-      // console.log(pipe);
-      if (player.collides(pipe)){
-        alert("Dead");
-      }
-    })
+    var dead = false;
+    if (player.outOfBounds()) {
+      dead = true;
+    } else {
+      pipesModel.pipes.forEach(function(pipe){
+        // console.log("Check collision");
+        // console.log(player);
+        // console.log(pipe);
+        if (player.collides(pipe)){
+          dead = true;
+        }
+      })
+    };
+    if (dead) {
+      controller.gameOver();
+      console.log("Dead");
+    }
   }
 
-  this.collides = function(other){
+  this.collides = function(pipe){
     // get the rightmost x value of the left sides
     // get the leftmost x value of the right sides
     // get the highest y value of the bottom sides
     // get the lowest y value of the top sides
 
     // We intersect if the rightmost is more than the leftmost and our lowest is greater than our highest.
-    var rightmost = Math.max(this.position.x + this.bounding.x, other.position.x + 40),
-        leftmost  = Math.min(this.position.x, other.position.x),
-        topmost   = Math.max(this.position.y, other.endHeight - other.startHeight),
-        bottommost= Math.min(this.position.y + this.bounding.y, other.startHeight + (other.endHeight - other.startHeight));
+    var rightmost = Math.max(this.position.x + this.bounding.x, pipe.position.x + 40),
+        leftmost  = Math.min(this.position.x, pipe.position.x),
+        topmost   = Math.max(this.position.y, pipe.endHeight - pipe.startHeight),
+        bottommost= Math.min(this.position.y + this.bounding.y, pipe.startHeight + (pipe.endHeight - pipe.startHeight));
 
-    // console.log(rightmost, leftmost, topmost, bottommost);
-    console.log(((leftmost > rightmost) && (bottommost > topmost)));
-    return ((leftmost > rightmost) && (bottommost > topmost));
+    return  !((this.position.x + this.bounding.x <= pipe.position.x) ||
+                (pipe.position.x + 40 <= this.position.x) ||
+                (this.position.y + this.bounding.y <= pipe.startHeight) ||
+                (pipe.endHeight <= this.position.y)
+    )
+
+  }
+
+  this.outOfBounds = function() {
+    return (this.position.y > view.canvas.height() || this.position.y + this.bounding.y < 0 )
   }
 }
 
