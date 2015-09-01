@@ -12,6 +12,8 @@ var pipesModel = {
 
   },
 
+  score: 0,
+
   step: 1500,
 
   timeCounter: 0,
@@ -23,19 +25,20 @@ var pipesModel = {
     this.timeCounter += dt;
     if (this.timeCounter > this.step){
       this.timeCounter -= this.step;
-      this.step -= 2;
-      var topPipeBottom = Math.floor(Math.random() * 300 + 100)
+      if (this.step > 500) this.step -= 20;
+      var topPipeBottom = Math.floor(Math.random() * 200 + 50)
       console.log(topPipeBottom)
       this.pipes.push(new Pipe(0, topPipeBottom));
-      this.pipes.push(new Pipe(topPipeBottom + 100, view.canvas.height()));
+      this.pipes.push(new Pipe(topPipeBottom + 80, view.canvas.height() - 200));
     }
   },
 
   ticPipes: function(){
     pipesModel.pipes.forEach(function(pipe, index, arr){
       pipe.tic();
-      if (pipe.position.x < -40) {
+      if (pipe.position.x < -pipe.width) {
         arr.splice(index, 1)
+        pipesModel.score += 1;
         console.log(pipesModel.pipes.length + " pipes left")
       }
     })
@@ -53,16 +56,41 @@ var view = {
     this.canvas = $("#canvas");
   },
 
-  redraw: function(bird, pipes){
+  redraw: function(bird, pipes, score){
     this.canvas.clearCanvas();
+    this.drawFloor();
     this.drawBird(bird);
     this.drawPipes(pipes);
+    this.drawScore(score);
+  },
+
+  drawScore: function(score){
+    this.canvas.drawText({
+      strokeStyle: 'black',
+      strokeWidth: 2,
+      x: 50,
+      y: this.canvas.height() - 100,
+      fontSize: 48,
+      fontFamily: 'Verdana, sans-serif',
+      text: Math.floor(score/2),
+    });
   },
 
   drawPipes: function(pipes){
     pipes.forEach(function(pipe){
       view.drawPipe(pipe);
     })
+  },
+
+  drawFloor: function(){
+    this.canvas.drawRect({
+      fillStyle: "yellow",
+      x: 0,
+      y: this.canvas.height() - 200,
+      width: this.canvas.width(),
+      height: 200,
+      fromCenter: false,
+    });
   },
 
   drawPipe: function(pipe){
@@ -88,7 +116,7 @@ var view = {
   },
 
   setListeners: function () {
-    document.addEventListener("mousedown", function(){
+    $(window).on("mousedown", function(){
       player.jump.call(player);
     })
   }
@@ -109,7 +137,7 @@ var controller = {
       controller.generatePipes(Date.now() - controller.currentTime);
       player.tic();
       pipesModel.ticPipes();
-      view.redraw.call(view, player, pipesModel.pipes);
+      view.redraw.call(view, player, pipesModel.pipes, pipesModel.score);
       player.dead.call(player);
     }, 15);
   },
@@ -139,10 +167,10 @@ function Bird () {
     x: 100,
     y: 100
   };
-  this.gravity = .2;
+  this.gravity = .25;
   this.tic = tic;
   this.jump = function () {
-    this.velocity.y = -4;
+    this.velocity.y = -5;
     console.log(this);
   };
 
@@ -179,7 +207,7 @@ function Bird () {
         bottommost= Math.min(this.position.y + this.bounding.y, pipe.startHeight + (pipe.endHeight - pipe.startHeight));
 
     return  !((this.position.x + this.bounding.x <= pipe.position.x) ||
-                (pipe.position.x + 40 <= this.position.x) ||
+                (pipe.position.x + pipe.width <= this.position.x) ||
                 (this.position.y + this.bounding.y <= pipe.startHeight) ||
                 (pipe.endHeight <= this.position.y)
     )
@@ -187,7 +215,7 @@ function Bird () {
   }
 
   this.outOfBounds = function() {
-    return (this.position.y > view.canvas.height() || this.position.y + this.bounding.y < 0 )
+    return (this.position.y + this.bounding.y > view.canvas.height() - 200 || this.position.y + this.bounding.y < 0 )
   }
 }
 
@@ -204,7 +232,7 @@ function Pipe (top, bottom) {
   this.tic = tic;
   this.startHeight = top;
   this.endHeight = bottom;
-  this.width = 40;
+  this.width = 70;
 }
 
 $(document).ready(function(){
