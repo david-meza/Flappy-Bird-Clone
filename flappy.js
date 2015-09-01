@@ -24,12 +24,19 @@ var pipesModel = {
     if (this.timeCounter > this.step){
       this.timeCounter -= this.step;
       this.step -= 2;
-      this.pipes.push(new Pipe());
+      var topPipeBottom = Math.floor(Math.random() * 200 + 300)
+      this.pipes.push(new Pipe(0, topPipeBottom));
+      this.pipes.push(new Pipe(topPipeBottom + 200, view.canvas.height()));
     }
   },
+
   ticPipes: function(){
-    pipesModel.pipes.forEach(function(pipe){
+    pipesModel.pipes.forEach(function(pipe, index, arr){
       pipe.tic();
+      if (pipe.position.x < -40) {
+        arr.splice(index, 1)
+        console.log(pipesModel.pipes.length + " pipes left")
+      }
     })
   }
 }
@@ -61,9 +68,9 @@ var view = {
     this.canvas.drawRect({
       fillStyle: "black",
       x: pipe.position.x,
-      y: pipe.position.y,
-      width: 40,
-      height: 30,
+      y: pipe.startHeight,
+      width: pipe.width,
+      height: pipe.endHeight,
     });
   },
 
@@ -122,16 +129,15 @@ function Bird () {
     x: 100,
     y: 100
   };
-  this.gravity = .1;
+  this.gravity = .2;
   this.tic = tic;
   this.jump = function () {
-    this.velocity.y = -5;
+    this.velocity.y = -4;
     console.log(this);
   };
 }
 
-function Pipe () {
-  this.hanging = false;
+function Pipe (top, bottom) {
   this.velocity = {
     x: -5,
     y: 0
@@ -142,6 +148,9 @@ function Pipe () {
   };
   this.gravity = 0;
   this.tic = tic;
+  this.startHeight = top;
+  this.endHeight = bottom;
+  this.width = 40;
 }
 
 $(document).ready(function(){
