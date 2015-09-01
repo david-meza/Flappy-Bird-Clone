@@ -61,9 +61,51 @@ var view = {
   redraw: function(bird, pipes, score){
     this.canvas.clearCanvas();
     this.drawFloor();
+    this.drawBackground();
     this.drawBird(bird);
     this.drawPipes(pipes);
     this.drawScore(score);
+  },
+
+  drawBackground: function(){
+    // var patt = this.canvas.createPattern({
+    //   source: 'res/sheet.png',
+    //   repeat: 'repeat',
+    //   sWidth: 138,
+    //   sHeight: 114,
+    //   sx: 0,
+    //   sy: 0,
+    //   cropFromCenter: false,
+    // })
+    this.canvas.drawImage({
+      source: 'res/sheet.png',
+      repeat: 'repeat',
+      x: 0,
+      y: 0,
+      sWidth: 138,
+      sHeight: 114,
+      sx: 0,
+      sy: 0,
+      cropFromCenter: false,
+      width: this.canvas.width()/2,
+      height: this.canvas.height() - 200,
+      fromCenter: false,
+    })
+    this.canvas.drawImage({
+      source: 'res/sheet.png',
+      repeat: 'repeat',
+      x: this.canvas.width()/2,
+      y: 0,
+      sWidth: 138,
+      sHeight: 114,
+      sx: 0,
+      sy: 0,
+      cropFromCenter: false,
+      width: this.canvas.width()/2,
+      height: this.canvas.height() - 200,
+      fromCenter: false,
+    })
+
   },
 
   drawScore: function(score){
@@ -97,7 +139,7 @@ var view = {
 
   drawPipe: function(pipe){
     this.canvas.drawRect({
-      fillStyle: "black",
+      fillStyle: "green",
       x: pipe.position.x,
       y: pipe.startHeight,
       width: pipe.width,
