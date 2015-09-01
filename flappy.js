@@ -9,7 +9,10 @@ var player = new Bird();
 var pipesModel = {
 
   init: function () {
-
+    this.score = 0;
+    this.step = 1500;
+    this.timeCounter = 0;
+    this.pipes = [];
   },
 
   score: 0,
@@ -49,7 +52,6 @@ var view = {
 
   init: function () {
     this.setCanvas();
-    this.setListeners();
   },
 
   setCanvas: function () {
@@ -119,6 +121,11 @@ var view = {
     $(window).on("mousedown", function(){
       player.jump.call(player);
     })
+    $("#gameover").on("click", controller.restartGame);
+  },
+
+  toggleGameOver: function() {
+    $("#gameover").toggleClass("hidden");
   }
 
 }
@@ -134,21 +141,32 @@ var controller = {
 
   play: function(){
     this.playLoop = setInterval(function(){
-      controller.generatePipes(Date.now() - controller.currentTime);
-      player.tic();
-      pipesModel.ticPipes();
-      view.redraw.call(view, player, pipesModel.pipes, pipesModel.score);
-      player.dead.call(player);
-    }, 15);
+        controller.generatePipes(Math.min(Date.now() - controller.currentTime, 100));
+        player.tic();
+        pipesModel.ticPipes();
+        view.redraw.call(view, player, pipesModel.pipes, pipesModel.score);
+        player.dead.call(player);
+    controller.currentTime = Date.now();
+    }, 1000 / 60);
   },
 
   generatePipes: function(dt){
-    controller.currentTime = Date.now();
     pipesModel.generatePipe(dt);
   },
 
   gameOver: function() {
+    console.log(this.playLoop)
     clearInterval(this.playLoop);
+    this.playLoop = null;
+    console.log(this.playLoop)
+    view.toggleGameOver();
+  },
+
+  restartGame: function() {
+    player = new Bird();
+    view.toggleGameOver();
+    controller.init();
+    controller.play();
   }
 
 }
@@ -237,5 +255,6 @@ function Pipe (top, bottom) {
 
 $(document).ready(function(){
   controller.init();
+  view.setListeners();
   controller.play();
 });
