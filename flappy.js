@@ -2,7 +2,7 @@ var tic = function () {
   this.position.x += this.velocity.x;
   this.position.y += this.velocity.y;
   this.velocity.y += this.gravity;
-  if (this.velocity.y > 10) this.velocity.y = 10;
+  if (this.velocity.y > 15) this.velocity.y = 15;
 }
 
 var player = new Bird();
@@ -15,14 +15,6 @@ var pipesModel = {
     this.timeCounter = 0;
     this.pipes = [];
   },
-
-  score: 0,
-
-  step: 1500,
-
-  timeCounter: 0,
-
-  pipes: [],
 
   generatePipe: function(dt) {
     // if enough time has elapsed
@@ -174,8 +166,6 @@ var view = {
     });
 
     pipe.hanging ? this.drawPipeBottom(pipe) : this.drawPipeTop(pipe);
-
-    // 251, 0, 26, 200
   },
 
   drawPipeBottom: function(pipe){
@@ -209,11 +199,9 @@ var view = {
   },
 
   drawBird: function (bird) {
-    var rotation = Math.sin(Math.PI - (Math.PI * bird.velocity.y / 20)) * 90;
+    var rotation = Math.sin(Math.PI - (Math.PI * bird.velocity.y / 30)) * 90;
     if (rotation < -35) rotation = -35;
     if (rotation > 90) rotation = 90;
-    console.log(rotation)
-    console.log("velocity is " + bird.velocity.y)
     this.canvas.drawImage({
       source: 'res/sheet.png',
       sx: 312,
@@ -244,7 +232,6 @@ var view = {
 
   updateHighScores: function(scores){
     this.highscores.empty();
-    console.log(typeof this.highscores);
     scores.forEach(function(score){
       $(this.highscores).append("<li>" + score + "</li>");
     })
@@ -308,45 +295,33 @@ function Bird () {
   };
   this.gravity = .25;
   this.tic = tic;
-  this.jump = function () {
-    this.velocity.y = -5;
-  };
+}
 
-  this.dead = function(){
-    if (player.outOfBounds() || player.hitPipe()) controller.gameOver();
-  }
+Bird.prototype.jump = function () {
+  this.velocity.y = -5;
+};
 
-  this.hitPipe = function(){
-    var result = false;
-    pipesModel.pipes.forEach(function(pipe){
-      if (player.collides(pipe)) result = true;
-    })
-    return result;
-  }
+Bird.prototype.dead = function(){
+  if (player.outOfBounds() || player.hitPipe()) controller.gameOver();
+}
 
-  this.collides = function(pipe){
-    // get the rightmost x value of the left sides
-    // get the leftmost x value of the right sides
-    // get the highest y value of the bottom sides
-    // get the lowest y value of the top sides
+Bird.prototype.hitPipe = function(){
+  var result = false;
+  pipesModel.pipes.forEach(function(pipe){
+    if (player.collides(pipe)) result = true;
+  })
+  return result;
+}
 
-    // We intersect if the rightmost is more than the leftmost and our lowest is greater than our highest.
-    var rightmost = Math.max(this.position.x + this.bounding.x, pipe.position.x + 40),
-        leftmost  = Math.min(this.position.x, pipe.position.x),
-        topmost   = Math.max(this.position.y, pipe.endHeight - pipe.startHeight),
-        bottommost= Math.min(this.position.y + this.bounding.y, pipe.startHeight + (pipe.endHeight - pipe.startHeight));
+Bird.prototype.collides = function(pipe){
+  return  !((this.position.x + this.bounding.x <= pipe.position.x) ||
+            (pipe.position.x + pipe.width <= this.position.x) ||
+            (this.position.y + this.bounding.y <= pipe.startHeight) ||
+            (pipe.endHeight <= this.position.y))
+}
 
-    return  !((this.position.x + this.bounding.x <= pipe.position.x) ||
-                (pipe.position.x + pipe.width <= this.position.x) ||
-                (this.position.y + this.bounding.y <= pipe.startHeight) ||
-                (pipe.endHeight <= this.position.y)
-    )
-
-  }
-
-  this.outOfBounds = function() {
-    return (this.position.y + this.bounding.y > view.canvas.height() - 200 || this.position.y + this.bounding.y < 0 )
-  }
+Bird.prototype.outOfBounds = function() {
+  return (this.position.y + this.bounding.y > view.canvas.height() - 200 || this.position.y + this.bounding.y < 0 )
 }
 
 function Pipe (top, bottom, hanging) {
