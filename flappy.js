@@ -2,6 +2,7 @@ var tic = function () {
   this.position.x += this.velocity.x;
   this.position.y += this.velocity.y;
   this.velocity.y += this.gravity;
+  if (this.velocity.y > 10) this.velocity.y = 10;
 }
 
 var player = new Bird();
@@ -115,8 +116,8 @@ var view = {
       strokeWidth: 2,
       x: 50,
       y: this.canvas.height() - 100,
-      fontSize: 48,
-      fontFamily: 'Verdana, sans-serif',
+      fontSize: 72,
+      fontFamily: 'Bitter, Verdana, sans-serif',
       text: Math.floor(score/2),
     });
   },
@@ -208,8 +209,11 @@ var view = {
   },
 
   drawBird: function (bird) {
-    var rotation = Math.sin(bird.velocity.y / 5 * Math.PI) * 90;
+    var rotation = Math.sin(Math.PI - (Math.PI * bird.velocity.y / 20)) * 90;
     if (rotation < -35) rotation = -35;
+    if (rotation > 90) rotation = 90;
+    console.log(rotation)
+    console.log("velocity is " + bird.velocity.y)
     this.canvas.drawImage({
       source: 'res/sheet.png',
       sx: 312,
