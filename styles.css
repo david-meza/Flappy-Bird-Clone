@@ -77,7 +77,11 @@ li {
 }
 
 p {
-  color: #333;
+  color: #569D1A;
+  box-shadow: 3px 3px 3px #333;
+  background-color: #e4ff85;
+  display: inline-block;
+  opacity: 0.9;
 }
 
 #play-again {
@@ -114,7 +118,7 @@ p {
   filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#634b30', endColorstr='#7d5d3b',GradientType=0);
   background-color:#634b30;
 }
-.myButton:active {
+#play-again:active {
   position:relative;
   top:1px;
 }

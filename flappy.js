@@ -24,7 +24,7 @@ var pipesModel = {
       if (this.step > 500) this.step -= 20;
       var topPipeBottom = Math.floor(Math.random() * 200 + 50)
       this.pipes.push(new Pipe(0, topPipeBottom, true));
-      this.pipes.push(new Pipe(topPipeBottom + 80, view.canvas.height() - 200, false));
+      this.pipes.push(new Pipe(topPipeBottom + 90, view.canvas.height() - 200, false));
     }
   },
 
@@ -220,7 +220,11 @@ var view = {
 
   setListeners: function () {
     $(window).on("mousedown", function(){
-      player.jump.call(player);
+      if (controller.gameStart) {
+        player.jump.call(player);
+      } else {
+        controller.gameStart = true;
+      };
     })
     $("#gameover").on("click", controller.restartGame);
   },
@@ -247,15 +251,18 @@ var controller = {
   },
 
   currentTime: Date.now(),
+  gameStart: false,
 
   play: function(){
     this.playLoop = setInterval(function(){
+      if (controller.gameStart) {
         controller.generatePipes(Math.min(Date.now() - controller.currentTime, 100));
         player.tic();
         pipesModel.ticPipes();
-        view.redraw.call(view, player, pipesModel.pipes, pipesModel.score);
-        player.dead.call(player);
-    controller.currentTime = Date.now();
+      }
+      player.dead.call(player);
+      view.redraw.call(view, player, pipesModel.pipes, pipesModel.score);
+      controller.currentTime = Date.now();
     }, 1000 / 60);
   },
 
